@@ -1,7 +1,7 @@
 ---
 services:
   tsdproxy:
-    image: almeidapaulopt/tsdproxy:latest
+    image: almeidapaulopt/tsdproxy:1.1.2
     container_name: tsdproxy
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
