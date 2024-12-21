@@ -1,0 +1,16 @@
+---
+services:
+  vaultwarden:
+    image: vaultwarden/server:latest
+    container_name: vaultwarden
+    environment:
+      DOMAIN: "https://vaultwarden"
+      SIGNUPS_ALLOWED: true
+    ports:
+      - 2708:80
+    volumes:
+      - ./vaultwarden-data/:/data/
+    labels:
+      tsdproxy.enable: "true"
+      tsdproxy.name: "vaultwarden"
+    restart: unless-stopped
