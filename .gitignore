@@ -1,3 +1,4 @@
 ts-authkey.txt
 vaultwarden-data/
 actual-data/
+.env

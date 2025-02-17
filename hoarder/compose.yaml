@@ -1,0 +1,64 @@
+---
+services:
+  web:
+    image: ghcr.io/hoarder-app/hoarder:${HOARDER_VERSION:-release}
+    restart: unless-stopped
+    volumes:
+      - hoarder-data:/data
+    # ports:
+    #   - 3000:3000
+    env_file:
+      - .env
+    environment:
+      MEILI_ADDR: http://meilisearch:7700
+      BROWSER_WEB_URL: http://chrome:9222
+      # OPENAI_API_KEY: ...
+      DATA_DIR: /data
+    network_mode: service:tailscale
+    # labels:
+    #   tsdproxy.enable: "true"
+    #   tsdproxy.name: "hoarder"
+    #   tsdproxy.container_port: 3000
+  chrome:
+    image: gcr.io/zenika-hub/alpine-chrome:123
+    restart: unless-stopped
+    command:
+      - --no-sandbox
+      - --disable-gpu
+      - --disable-dev-shm-usage
+      - --remote-debugging-address=0.0.0.0
+      - --remote-debugging-port=9222
+      - --hide-scrollbars
+  meilisearch:
+    image: getmeili/meilisearch:v1.11.1
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      MEILI_NO_ANALYTICS: "true"
+    volumes:
+      - meilisearch:/meili_data
+  tailscale:
+    image: tailscale/tailscale:latest
+    hostname: hoarder
+    env_file:
+      - .env
+    environment:
+      - TS_EXTRA_ARGS=--advertise-tags=tag:container
+      - TS_SERVE_CONFIG=/config/hoarder.json
+      - TS_STATE_DIR=/var/lib/tailscale
+    volumes:
+      - tailscale-state-hoarder:/var/lib/tailscale
+      - ./config:/config
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    cap_add:
+      - net_admin
+      - sys_module
+    restart: unless-stopped
+
+volumes:
+  meilisearch:
+  hoarder-data:
+  tailscale-state-hoarder:
+    driver: local
