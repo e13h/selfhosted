@@ -1,10 +1,9 @@
 services:
   frontend:
     image: ghcr.io/e13h/onelineaday-frontend:latest-devel
-    ports:
-      - "8012:80"
     depends_on:
       - backend
+    network_mode: service:tailscale
     restart: unless-stopped
 
   backend:
@@ -17,7 +16,8 @@ services:
       - POSTGRES_PORT=5432
       - PORT=3000
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     restart: unless-stopped
 
   db:
@@ -28,8 +28,14 @@ services:
       - POSTGRES_DB=${POSTGRES_DB}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./supabase/migrations:/docker-entrypoint-initdb.d
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+      start_interval: 1s
 
   tailscale:
     image: tailscale/tailscale:latest
@@ -38,7 +44,7 @@ services:
       - .env
     environment:
       - TS_EXTRA_ARGS=--advertise-tags=tag:container
-      - TS_SERVE_CONFIG=/config/hoarder.json
+      - TS_SERVE_CONFIG=/config/onelineaday.json
       - TS_STATE_DIR=/var/lib/tailscale
     volumes:
       - tailscale-state-onelineaday:/var/lib/tailscale
