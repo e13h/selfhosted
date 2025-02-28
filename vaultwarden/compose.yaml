@@ -4,7 +4,7 @@ services:
     image: vaultwarden/server:latest
     container_name: vaultwarden
     environment:
-      DOMAIN: "https://vaultwarden"
+      DOMAIN: "https://vaultwarden.${TS_MAGICDNS_SUFFIX:?error}"
       SIGNUPS_ALLOWED: true
     ports:
       - 2708:80
@@ -13,4 +13,10 @@ services:
     labels:
       tsdproxy.enable: "true"
       tsdproxy.name: "vaultwarden"
+    networks:
+      - tsdproxy
     restart: unless-stopped
+
+networks:
+  tsdproxy:
+    external: true
