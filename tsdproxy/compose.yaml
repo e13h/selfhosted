@@ -1,23 +1,21 @@
 ---
 services:
   tsdproxy:
-    image: almeidapaulopt/tsdproxy:1.1.2
+    image: almeidapaulopt/tsdproxy:latest
     container_name: tsdproxy
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
+      - ${XDG_RUNTIME_DIR}/docker.sock:/var/run/docker.sock
       - tsdproxydata:/data
-    secrets:
-      - ts-authkey
-    environment:
-      - TSDPROXY_AUTHKEYFILE=/run/secrets/ts-authkey
-      # Address of docker server (access to example.com ports)
-      - TSDPROXY_HOSTNAME=10.42.37.238
-      - DOCKER_HOST=unix:///var/run/docker.sock
+      - ./config:/config
+    ports:
+      - "8080:8080"
     restart: unless-stopped
-
-secrets:
-  ts-authkey:
-    file: ./ts-authkey.txt
+    networks:
+      - tsdproxy
 
 volumes:
   tsdproxydata:
+
+networks:
+  tsdproxy:
+    external: true
