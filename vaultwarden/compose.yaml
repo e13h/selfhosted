@@ -13,6 +13,7 @@ services:
     labels:
       tsdproxy.enable: "true"
       tsdproxy.name: "vaultwarden"
+      tsdproxy.ephemeral: "false"
     networks:
       - tsdproxy
     restart: unless-stopped
