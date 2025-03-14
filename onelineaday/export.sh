@@ -1,5 +1,6 @@
 #!/bin/bash
 
+OUTPUT_FILENAME="onelineaday_export_$(date -Is).json"
 (
 	docker exec \
 		-e PGPASSWORD=your_secret_password \
@@ -11,4 +12,5 @@
 			-A \
 			-c "SELECT json_agg(row_to_json(t)) FROM (SELECT date, message FROM journal_entries) t;" \
 	| jq
-) > onelineaday_export_$(date -Is).json
+) > $OUTPUT_FILENAME
+echo $OUTPUT_FILENAME
