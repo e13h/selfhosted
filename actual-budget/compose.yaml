@@ -10,4 +10,11 @@ services:
     labels:
       tsdproxy.enable: "true"
       tsdproxy.name: "actual"
+      tsdproxy.ephemeral: "false"
+    networks:
+      - tsdproxy
     restart: unless-stopped
+
+networks:
+  tsdproxy:
+    external: true
