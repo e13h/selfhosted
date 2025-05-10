@@ -2,6 +2,7 @@
 services:
   timetagger:
     image: ghcr.io/almarklein/timetagger
+    container_name: timetagger
     ports:
       - "2004:80"
     volumes:
