@@ -1,5 +1,8 @@
 #!/bin/bash
 
+SCRIPT_DIR=$(dirname $(realpath $0))
+cd "$SCRIPT_DIR"
+
 # Make a new database backup
 docker exec -it vaultwarden /vaultwarden backup
 

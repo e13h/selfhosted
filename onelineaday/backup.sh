@@ -1,6 +1,8 @@
 #!/bin/bash
 
 SCRIPT_DIR=$(dirname $(realpath $0))
+cd $SCRIPT_DIR
+
 BACKUP_FILE=$(${SCRIPT_DIR}/export.sh)
 
 if [[ ! -f "$BACKUP_FILE" ]]; then
@@ -10,7 +12,6 @@ fi
 
 REMOTE_PATH=backblaze:e13h-backups/onelineaday
 
-cd $SCRIPT_DIR
 rclone sync . "$REMOTE_PATH" --include "${BACKUP_FILE}" --delete-excluded
 
 # Remove old local backup files
