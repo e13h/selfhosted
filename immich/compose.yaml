@@ -30,6 +30,13 @@ services:
     restart: always
     healthcheck:
       disable: false
+    labels:
+      tsdproxy.enable: "true"
+      tsdproxy.name: "immich"
+      tsdproxy.ephemeral: "false"
+    networks:
+      - tsdproxy
+      - immich
 
   immich-machine-learning:
     container_name: immich_machine_learning
@@ -46,13 +53,17 @@ services:
     restart: always
     healthcheck:
       disable: false
+    networks:
+      - immich
 
   redis:
     container_name: immich_redis
-    image: docker.io/valkey/valkey:8-bookworm@sha256:5b8f8c333bef895c925f56629d6ba90aea95a4f7391f62411e625267c600b19c
+    image: docker.io/valkey/valkey:8-bookworm@sha256:a137a2b60aca1a75130022d6bb96af423fefae4eb55faf395732db3544803280
     healthcheck:
       test: redis-cli ping || exit 1
     restart: always
+    networks:
+      - immich
 
   database:
     container_name: immich_postgres
@@ -63,12 +74,19 @@ services:
       POSTGRES_DB: ${DB_DATABASE_NAME}
       POSTGRES_INITDB_ARGS: '--data-checksums'
       # Uncomment the DB_STORAGE_TYPE: 'HDD' var if your database isn't stored on SSDs
-      # DB_STORAGE_TYPE: 'HDD'
+      DB_STORAGE_TYPE: 'HDD'
     volumes:
       # Do not edit the next line. If you want to change the database storage location on your system, edit the value of DB_DATA_LOCATION in the .env file
       - ${DB_DATA_LOCATION}:/var/lib/postgresql/data
     shm_size: 128mb
     restart: always
+    networks:
+      - immich
 
 volumes:
   model-cache:
+
+networks:
+  immich:
+  tsdproxy:
+    external: true

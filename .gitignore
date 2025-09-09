@@ -2,3 +2,6 @@ ts-authkey.txt
 vaultwarden-data/
 actual-data/
 .env
+immich/library/
+immich/postgres/
+
