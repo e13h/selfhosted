@@ -4,4 +4,5 @@ actual-data/
 .env
 immich/library/
 immich/postgres/
-
+radicale/config/users
+radicale/data/

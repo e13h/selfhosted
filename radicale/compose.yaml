@@ -1,0 +1,37 @@
+---
+services:
+  radicale:
+    image: ghcr.io/kozea/radicale:stable
+    container_name: radicale
+    ports:
+      - 5232:5232
+    volumes:
+      - config:/etc/radicale
+      - data:/var/lib/radicale
+    labels:
+      tsdproxy.enable: "true"
+      tsdproxy.name: "radicale"
+      tsdproxy.ephemeral: "false"
+    networks:
+      - tsdproxy
+    restart: unless-stopped
+
+volumes:
+  config:
+    name: radicale-config
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./config
+  data:
+    name: radicale-data
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data
+
+networks:
+  tsdproxy:
+    external: true
