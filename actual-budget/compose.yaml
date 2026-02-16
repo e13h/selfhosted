@@ -14,6 +14,10 @@ services:
     networks:
       - tsdproxy
     restart: unless-stopped
+    environment:
+      - ACTUAL_OPENID_ENFORCE=true
+    env_file:
+      - .env
 
 networks:
   tsdproxy:
