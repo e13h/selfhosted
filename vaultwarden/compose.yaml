@@ -6,6 +6,11 @@ services:
     environment:
       DOMAIN: "https://vaultwarden.${TS_MAGICDNS_SUFFIX:?error}"
       SIGNUPS_ALLOWED: true
+      SSO_ENABLED: true
+      SSO_ONLY: false
+      SIGNUPS_VERIFY: false
+    env_file:
+      - .env
     ports:
       - 2708:80
     volumes:
