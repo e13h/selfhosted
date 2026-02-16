@@ -1,7 +1,7 @@
 ---
 services:
   actual_server:
-    image: docker.io/actualbudget/actual-server:edge-alpine
+    image: ghcr.io/e13h/actual-server:edge-alpine
     container_name: actual-budget
     ports:
       - '5006:5006'
