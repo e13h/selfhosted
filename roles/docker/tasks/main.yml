@@ -1,0 +1,128 @@
+# Install dependencies
+- name: Install Docker and rootless dependencies
+  ansible.builtin.apt:
+    name:
+      - ca-certificates
+      - curl
+      - uidmap
+      - dbus-user-session
+      - slirp4netns
+      - fuse-overlayfs
+    state: present
+    update_cache: true
+
+# Add Docker apt repository
+- name: Create apt keyrings directory
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: "0755"
+
+- name: Download Docker GPG key
+  ansible.builtin.get_url:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    dest: /etc/apt/keyrings/docker.asc
+    mode: "0644"
+
+- name: Get system architecture
+  ansible.builtin.command: dpkg --print-architecture
+  register: dpkg_architecture
+  changed_when: false
+
+- name: Get Ubuntu codename
+  ansible.builtin.command: lsb_release -cs
+  register: ubuntu_codename
+  changed_when: false
+
+- name: Add Docker apt repository
+  ansible.builtin.copy:
+    dest: /etc/apt/sources.list.d/docker.list
+    content: |
+      deb [arch={{ dpkg_architecture.stdout }} signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu {{ ubuntu_codename.stdout }} stable
+    mode: "0644"
+
+- name: Install Docker Engine
+  ansible.builtin.apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
+      - docker-ce-rootless-extras
+    state: present
+    update_cache: true
+
+# Ubuntu 24.04 specific - fix AppArmor restriction on user namespaces
+- name: Allow unprivileged user namespaces (required for rootless Docker on Ubuntu 24.04)
+  ansible.builtin.copy:
+    dest: /etc/sysctl.d/99-rootless-docker.conf
+    content: |
+      kernel.apparmor_restrict_unprivileged_userns=0
+    mode: "0644"
+
+- name: Apply sysctl changes
+  ansible.builtin.command: sysctl --system
+  changed_when: false
+
+# Ensure user namespaces are enabled
+- name: Enable user namespaces
+  ansible.builtin.copy:
+    dest: /etc/sysctl.d/00-local-userns.conf
+    content: |
+      user.max_user_namespaces=28633
+    mode: "0644"
+
+# Disable the system-level Docker daemon - rootless runs per-user instead
+- name: Stop system Docker daemon and socket
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    enabled: false
+    state: stopped
+  loop:
+    - docker.socket
+    - docker
+
+# Enable lingering so user services start at boot without login
+- name: Enable lingering for admin user
+  ansible.builtin.command:
+    cmd: loginctl enable-linger {{ ansible_user }}
+  changed_when: false
+
+- name: Remove rootful Docker socket file if present
+  ansible.builtin.file:
+    path: /var/run/docker.sock
+    state: absent
+
+- name: Get admin user UID
+  ansible.builtin.command: id -u {{ ansible_user }}
+  register: admin_uid
+  changed_when: false
+
+# Install and enable rootless Docker as the admin user
+- name: Install rootless Docker for admin user
+  ansible.builtin.shell: |
+    export XDG_RUNTIME_DIR=/run/user/{{ admin_uid.stdout }}
+    export DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/{{ admin_uid.stdout }}/bus
+    dockerd-rootless-setuptool.sh install
+  become: true
+  become_user: "{{ ansible_user }}"
+  changed_when: false
+
+- name: Enable rootless Docker service for admin user
+  ansible.builtin.systemd:
+    name: docker
+    enabled: true
+    state: started
+    scope: user
+  become: true
+  become_user: "{{ ansible_user }}"
+  environment:
+    XDG_RUNTIME_DIR: "/run/user/{{ admin_uid.stdout }}"
+
+# Set DOCKER_HOST so docker CLI works without extra flags
+- name: Configure DOCKER_HOST environment variable
+  ansible.builtin.lineinfile:
+    path: "/home/{{ ansible_user }}/.bashrc"
+    line: "export DOCKER_HOST=unix:///run/user/{{ admin_uid.stdout }}/docker.sock"
+    create: true

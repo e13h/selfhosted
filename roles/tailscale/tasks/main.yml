@@ -1,0 +1,60 @@
+# Add Tailscale apt repository
+- name: Download Tailscale GPG key
+  ansible.builtin.get_url:
+    url: https://pkgs.tailscale.com/stable/ubuntu/noble.noarmor.gpg
+    dest: /usr/share/keyrings/tailscale-archive-keyring.gpg
+    mode: "0644"
+
+- name: Add Tailscale apt repository
+  ansible.builtin.get_url:
+    url: https://pkgs.tailscale.com/stable/ubuntu/noble.tailscale-keyring.list
+    dest: /etc/apt/sources.list.d/tailscale.list
+    mode: "0644"
+
+- name: Install Tailscale
+  ansible.builtin.apt:
+    name: tailscale
+    state: present
+    update_cache: true
+
+- name: Enable and start Tailscale service
+  ansible.builtin.systemd:
+    name: tailscaled
+    enabled: true
+    state: started
+
+# Check current Tailscale status
+- name: Get Tailscale status
+  ansible.builtin.command: tailscale status --json
+  register: tailscale_status
+  changed_when: false
+  failed_when: false
+
+- name: Parse Tailscale status
+  ansible.builtin.set_fact:
+    tailscale_is_running: "{{ (tailscale_status.stdout | from_json).BackendState == 'Running' }}"
+  when: tailscale_status.stdout != ""
+
+# Authenticate if not already connected
+- name: Authenticate with Tailscale
+  ansible.builtin.command: >
+    tailscale up
+    --auth-key={{ tailscale_auth_key }}
+    --ssh
+    --accept-dns
+  when:
+    - tailscale_auth_key is defined
+    - not tailscale_is_running | default(false)
+  register: tailscale_up
+  changed_when: tailscale_up.rc == 0
+
+# Configure settings on already-running node using `tailscale set`
+# which only updates specified flags without touching others
+- name: Configure Tailscale settings
+  ansible.builtin.command: >
+    tailscale set
+    --ssh
+    --accept-dns
+    --auto-update
+  when: tailscale_is_running | default(false)
+  changed_when: false

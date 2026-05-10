@@ -1,0 +1,19 @@
+- name: restart ssh
+  ansible.builtin.service:
+    name: ssh
+    state: restarted
+
+- name: restart systemd-logind
+  ansible.builtin.service:
+    name: systemd-logind
+    state: restarted
+
+- name: restart systemd-timesyncd
+  ansible.builtin.service:
+    name: systemd-timesyncd
+    state: restarted
+
+- name: restart NetworkManager
+  ansible.builtin.service:
+    name: NetworkManager
+    state: restarted

@@ -1,0 +1,168 @@
+# Lid / Power behavior
+- name: Configure logind for headless laptop
+  ansible.builtin.blockinfile:
+    path: /etc/systemd/logind.conf
+    block: |
+      HandleLidSwitch=ignore
+      HandleLidSwitchExternalPower=ignore
+      HandleLidSwitchDocked=ignore
+      HandlePowerKey=poweroff
+      IdleAction=ignore
+  notify: restart systemd-logind
+
+- name: Disable sleep and hibernate targets
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    enabled: false
+    masked: true
+  loop:
+    - sleep.target
+    - suspend.target
+    - hibernate.target
+    - hybrid-sleep.target
+
+- name: Create dconf system profile
+  ansible.builtin.copy:
+    dest: /etc/dconf/profile/user
+    content: |
+      user-db:user
+      system-db:local
+
+- name: Create dconf local db directory
+  ansible.builtin.file:
+    path: /etc/dconf/db/local.d
+    state: directory
+
+- name: Disable GNOME suspend via system dconf policy
+  ansible.builtin.copy:
+    dest: /etc/dconf/db/local.d/00-power
+    content: |
+      [org/gnome/settings-daemon/plugins/power]
+      sleep-inactive-battery-type='nothing'
+      sleep-inactive-ac-type='nothing'
+
+- name: Create dconf locks directory
+  ansible.builtin.file:
+    path: /etc/dconf/db/local.d/locks
+    state: directory
+
+- name: Lock power settings so user cannot override
+  ansible.builtin.copy:
+    dest: /etc/dconf/db/local.d/locks/00-power
+    content: |
+      /org/gnome/settings-daemon/plugins/power/sleep-inactive-battery-type
+      /org/gnome/settings-daemon/plugins/power/sleep-inactive-ac-type
+
+- name: Update dconf database
+  ansible.builtin.command: dconf update
+
+- name: Disable wifi power management
+  ansible.builtin.copy:
+    dest: /etc/NetworkManager/conf.d/wifi-power-management.conf
+    content: |
+      [connection]
+      wifi.powersave=2
+    mode: "0644"
+  notify: restart NetworkManager
+
+# Display
+- name: Blank display after 5 minutes of inactivity
+  ansible.builtin.lineinfile:
+    path: /etc/systemd/logind.conf
+    regexp: "^#?IdleActionSec="
+    line: "IdleActionSec=5min"
+  notify: restart systemd-logind
+
+- name: Set DPMS display off via GRUB environment (TTY)
+  ansible.builtin.lineinfile:
+    path: /etc/default/grub
+    regexp: '^GRUB_CMDLINE_LINUX_DEFAULT='
+    line: 'GRUB_CMDLINE_LINUX_DEFAULT="quiet splash consoleblank=300"'
+  register: grub_changed
+
+- name: Update GRUB if changed
+  ansible.builtin.command: update-grub
+  when: grub_changed.changed
+
+# Network
+- name: Ensure NetworkManager keeps connections up without a logged-in user
+  ansible.builtin.copy:
+    dest: /etc/NetworkManager/conf.d/no-wait-online.conf
+    content: |
+      [connection]
+      connection.autoconnect=true
+
+      [main]
+      auth-polkit=false
+  notify: restart NetworkManager
+
+- name: Enable Wake-on-LAN for primary interface
+  ansible.builtin.copy:
+    dest: /etc/NetworkManager/dispatcher.d/99-wake-on-lan
+    mode: "0755"
+    content: |
+      #!/bin/sh
+      if [ "$2" = "up" ]; then
+        ethtool -s "$1" wol g
+      fi
+
+- name: Ensure avahi-daemon is installed and enabled
+  ansible.builtin.apt:
+    name: avahi-daemon
+    state: present
+
+- name: Enable and start avahi-daemon
+  ansible.builtin.systemd:
+    name: avahi-daemon
+    enabled: true
+    state: started
+
+# Time sync
+- name: Ensure systemd-timesyncd is enabled and running
+  ansible.builtin.systemd:
+    name: systemd-timesyncd
+    enabled: true
+    state: started
+
+# SSH hardening
+- name: Harden SSH configuration
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    validate: sshd -t -f %s
+  loop:
+    - { regexp: "^#?PasswordAuthentication", line: "PasswordAuthentication no" }
+    - { regexp: "^#?PermitRootLogin",        line: "PermitRootLogin no" }
+    - { regexp: "^#?PubkeyAuthentication",   line: "PubkeyAuthentication yes" }
+    - { regexp: "^#?AuthorizedKeysFile",     line: "AuthorizedKeysFile .ssh/authorized_keys" }
+  notify: restart ssh
+
+# Authorized keys
+- name: Fetch and set authorized keys from Codeberg
+  ansible.posix.authorized_key:
+    user: "{{ ansible_user }}"
+    key: "{{ codeberg_keys_url }}"
+    exclusive: true
+    state: present
+
+# Media dirs
+- name: Create {{ storage_path }} directory
+  ansible.builtin.file:
+    path: "{{ storage_path }}"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0755"
+
+- name: Create media subdirectories
+  ansible.builtin.file:
+    path: "{{ storage_path }}/{{ item }}"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0755"
+  loop:
+    - music
+    - movies
+    - audiobooks

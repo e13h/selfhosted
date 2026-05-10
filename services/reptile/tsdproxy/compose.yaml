@@ -1,0 +1,17 @@
+---
+services:
+  tsdproxy:
+    image: almeidapaulopt/tsdproxy:latest
+    container_name: tsdproxy2
+    volumes:
+      - ${XDG_RUNTIME_DIR:?error}/docker.sock:/var/run/docker.sock
+      - "{{ appdata_path }}/apps/tsdproxy/data:/data"
+      - "{{ appdata_path }}/apps/tsdproxy/config:/config"
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    networks:
+      - tsdproxy
+
+networks:
+  tsdproxy:

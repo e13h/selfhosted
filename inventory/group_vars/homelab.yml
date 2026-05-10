@@ -1,0 +1,3 @@
+docker_compose_generator_output_path: "/home/{{ ansible_user }}"
+appdata_path: "/home/{{ ansible_user }}/appdata"
+storage_path: "/data"
