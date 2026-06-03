@@ -1,0 +1,32 @@
+services:
+  pinchflat:
+    image: ghcr.io/kieraneglin/pinchflat:latest
+    container_name: pinchflat
+    environment:
+      - TZ=America/Los_Angeles
+    ports:
+      - '8945:8945'
+    volumes:
+      - pinchflat-config:/config
+      - pinchflat-downloads:/downloads
+    labels:
+      tsdproxy.enable: "true"
+      tsdproxy.name: "pinchflat"
+      tsdproxy.ephemeral: "false"
+    restart: unless-stopped
+    networks:
+      - tsdproxy
+
+volumes:
+  pinchflat-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "{{ appdata_path }}/apps/pinchflat"
+  pinchflat-downloads:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "{{ storage_path }}/youtube"
