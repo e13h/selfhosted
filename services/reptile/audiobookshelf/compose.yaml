@@ -1,0 +1,46 @@
+services:
+  audiobookshelf:
+    image: ghcr.io/advplyr/audiobookshelf:latest
+    container_name: audiobookshelf
+    ports:
+      - "13378:80"
+    volumes:
+      - audiobookshelf-audiobooks:/audiobooks:ro
+      - audiobookshelf-podcasts:/podcasts:ro
+      - audiobookshelf-config:/config
+      - audiobookshelf-metadata:/metadata
+    environment:
+      - TZ=America/Los_Angeles
+    labels:
+      tsdproxy.enable: "true"
+      tsdproxy.name: "audiobookshelf"
+      tsdproxy.ephemeral: "false"
+    restart: unless-stopped
+    networks:
+      - tsdproxy
+
+volumes:
+  audiobookshelf-audiobooks:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "{{ storage_path }}/audiobooks"
+  audiobookshelf-podcasts:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "{{ storage_path }}/podcasts"
+  audiobookshelf-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "{{ appdata_path }}/apps/audiobookshelf/config"
+  audiobookshelf-metadata:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "{{ appdata_path }}/apps/audiobookshelf/metadata"
