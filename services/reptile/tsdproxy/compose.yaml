@@ -1,7 +1,7 @@
 ---
 services:
   tsdproxy:
-    image: almeidapaulopt/tsdproxy:latest
+    image: almeidapaulopt/tsdproxy:1
     container_name: tsdproxy2
     volumes:
       - ${XDG_RUNTIME_DIR:?error}/docker.sock:/var/run/docker.sock
