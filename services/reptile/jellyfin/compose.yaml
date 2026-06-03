@@ -1,0 +1,45 @@
+services:
+  jellyfin:
+    image: jellyfin/jellyfin:latest
+    container_name: jellyfin
+    ports:
+      - "8096:8096/tcp"
+      - "7359:7359/udp"
+    volumes:
+      - jellyfin-config:/config
+      - jellyfin-cache:/cache
+      - jellyfin-movies:/movies:ro
+      - jellyfin-youtube:/youtube:ro
+    restart: unless-stopped
+    labels:
+      tsdproxy.enable: "true"
+      tsdproxy.name: "jellyfin"
+      tsdproxy.ephemeral: "false"
+    networks:
+      - tsdproxy
+
+volumes:
+  jellyfin-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "{{ appdata_path }}/apps/jellyfin/config"
+  jellyfin-cache:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "{{ appdata_path }}/apps/jellyfin/cache"
+  jellyfin-movies:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "{{ storage_path }}/movies"
+  jellyfin-youtube:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "{{ storage_path }}/youtube"
