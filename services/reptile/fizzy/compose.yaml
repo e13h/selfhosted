@@ -1,0 +1,29 @@
+services:
+  fizzy:
+    image: ghcr.io/basecamp/fizzy:main
+    container_name: fizzy
+    volumes:
+      - fizzy-data:/rails/storage
+    environment:
+      # TODO put these in an ansible var
+      SECRET_KEY_BASE: REDACTED
+      BASE_URL: https://fizzy.brown-pinecone.ts.net
+      VAPID_PRIVATE_KEY: REDACTED
+      VAPID_PUBLIC_KEY: BG0J99a12hJYYi-9LlcfU6t_pX1AwkMq6WZyWi58yh8rREDACTED
+    ports:
+      - "8180:80"
+    labels:
+      tsdproxy.enable: "true"
+      tsdproxy.name: "fizzy"
+      tsdproxy.ephemeral: "false"
+    restart: unless-stopped
+    networks:
+      - tsdproxy
+
+volumes:
+  fizzy-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "{{ appdata_path }}/apps/fizzy"
