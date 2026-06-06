@@ -2,16 +2,17 @@ defaultProxyProvider: default
 docker:
   local:
     host: unix:///var/run/docker.sock
-    targetHostname: 172.17.0.1
+    targetHostname: "host.docker.internal"
     defaultProxyProvider: default
-files: {}
+    tryDockerInternalNetwork: true
+lists: {}
 tailscale:
   providers:
     default:
       controlUrl: https://controlplane.tailscale.com
   dataDir: /data/
 http:
-  hostname: 0.0.0.0
+  hostname: 127.0.0.1
   port: 8080
 log:
   level: info
