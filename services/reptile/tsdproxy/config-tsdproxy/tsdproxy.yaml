@@ -9,6 +9,9 @@ lists: {}
 tailscale:
   providers:
     default:
+      clientId: "{{ tailscale_oauth_client_id }}"
+      clientSecret: "{{ tailscale_oauth_client_secret }}"
+      tags: "tag:container"
       controlUrl: https://controlplane.tailscale.com
   dataDir: /data/
 http:
