@@ -2,7 +2,7 @@ defaultProxyProvider: default
 docker:
   local:
     host: unix:///var/run/docker.sock
-    targetHostname: "host.docker.internal"
+    targetHostname: host.docker.internal
     defaultProxyProvider: default
     tryDockerInternalNetwork: true
 lists: {}
