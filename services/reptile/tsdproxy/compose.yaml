@@ -10,8 +10,8 @@ services:
       retries: 5
     volumes:
       - ${XDG_RUNTIME_DIR:?error}/docker.sock:/var/run/docker.sock
-      - "{{ appdata_path }}/apps/tsdproxy/data:/data"
-      - "{{ appdata_path }}/apps/tsdproxy/config:/config"
+      - tsdproxy-data:/data
+      - tsdproxy-config:/config
     ports:
       - "8080:8080"
     restart: unless-stopped
@@ -28,3 +28,17 @@ services:
 
 networks:
   tsdproxy:
+
+volumes:
+  tsdproxy-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "{{ appdata_path }}/apps/tsdproxy/data"
+  tsdproxy-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "{{ appdata_path }}/apps/tsdproxy/config"
