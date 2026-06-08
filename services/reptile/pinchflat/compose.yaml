@@ -14,6 +14,8 @@ services:
       tsdproxy.name: "pinchflat"
       tsdproxy.ephemeral: "false"
       tsdproxy.port.1: "443/https:8945/http"
+      tsdproxy.dash.category: "Media"
+      tsdproxy.dash.icon: "sh/pinchflat"
     restart: unless-stopped
     networks:
       - tsdproxy
