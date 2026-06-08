@@ -14,7 +14,7 @@ services:
     labels:
       tsdproxy.enable: "true"
       tsdproxy.name: "audiobookshelf"
-      tsdproxy.ephemeral: "false"
+      tsdproxy.ephemeral: "true"
       tsdproxy.port.1: "443/https:80/http"
       tsdproxy.dash.category: "Media"
     restart: unless-stopped
