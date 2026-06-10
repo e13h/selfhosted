@@ -2,7 +2,7 @@
 
 # Ansible playbook against specific host
 run *args:
-  ansible-playbook -i inventory/hosts.ini site.yml -K {{args}}
+  ansible-playbook -i inventory/hosts.ini site.yml --ask-vault-pass {{args}}
 
 
 
