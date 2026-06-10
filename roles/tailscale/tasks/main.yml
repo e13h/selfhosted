@@ -33,20 +33,40 @@
 - name: Parse Tailscale status
   ansible.builtin.set_fact:
     tailscale_is_running: "{{ (tailscale_status.stdout | from_json).BackendState == 'Running' }}"
+    tailscale_current_tags: "{{ (tailscale_status.stdout | from_json).Self.Tags | default([]) }}"
   when: tailscale_status.stdout != ""
 
 # Authenticate if not already connected
 - name: Authenticate with Tailscale
-  ansible.builtin.command: >
-    tailscale up
-    --auth-key={{ tailscale_auth_key }}
-    --ssh
-    --accept-dns
+  ansible.builtin.command:
+    argv: "{{ ['tailscale', 'up', '--auth-key=' + tailscale_oauth_client_secret, '--ssh', '--accept-dns'] + (['--advertise-tags=' + tailscale_advertise_tags | join(',')] if tailscale_advertise_tags | length > 0 else []) }}"
   when:
-    - tailscale_auth_key is defined
+    - tailscale_oauth_client_secret is defined
     - not tailscale_is_running | default(false)
   register: tailscale_up
   changed_when: tailscale_up.rc == 0
+
+# Check if already-running node is missing any desired tags
+- name: Check for missing Tailscale tags
+  ansible.builtin.set_fact:
+    tailscale_tags_missing: "{{ tailscale_advertise_tags | difference(tailscale_current_tags | default([])) | length > 0 }}"
+  when: tailscale_is_running | default(false)
+
+# Re-authenticate if tags are missing (tailscale set does not support --advertise-tags)
+- name: Re-authenticate Tailscale to apply missing tags
+  when:
+    - tailscale_is_running | default(false)
+    - tailscale_tags_missing | default(false)
+  block:
+    - name: Disconnect Tailscale
+      ansible.builtin.command: tailscale down
+      changed_when: true
+
+    - name: Re-connect Tailscale with correct tags
+      ansible.builtin.command:
+        argv: "{{ ['tailscale', 'up', '--auth-key=' + tailscale_oauth_client_secret, '--ssh', '--accept-dns'] + (['--advertise-tags=' + tailscale_advertise_tags | join(',')] if tailscale_advertise_tags | length > 0 else []) }}"
+      when: tailscale_oauth_client_secret is defined
+      changed_when: true
 
 # Configure settings on already-running node using `tailscale set`
 # which only updates specified flags without touching others
