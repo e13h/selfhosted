@@ -1,0 +1,55 @@
+- name: Read the generated compose file
+  ansible.builtin.slurp:
+    src: "{{ docker_compose_generator_output_path }}/compose.yaml"
+  register: generated_compose
+
+- name: Parse bind mount paths
+  ansible.builtin.set_fact:
+    bind_mount_paths: >-
+      {{
+        (generated_compose.content | b64decode | from_yaml).get('volumes', {}).values()
+        | select('mapping')
+        | selectattr('driver_opts', 'defined')
+        | map(attribute='driver_opts')
+        | selectattr('device', 'defined')
+        | map(attribute='device')
+        | select('match', '^/')
+        | list
+        | unique
+      }}
+
+- name: Stat bind mount directories
+  ansible.builtin.stat:
+    path: "{{ item }}"
+  loop: "{{ bind_mount_paths }}"
+  register: bind_mount_stat
+
+- name: Set missing bind mount paths
+  ansible.builtin.set_fact:
+    missing_bind_mount_paths: >-
+      {{
+        bind_mount_stat.results
+        | rejectattr('stat.exists')
+        | map(attribute='item')
+        | list
+      }}
+
+- name: Print bind mount directories that would be created
+  ansible.builtin.debug:
+    var: missing_bind_mount_paths
+
+- name: Create bind mount directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0755'
+  loop: "{{ missing_bind_mount_paths }}"
+
+- name: Ensure bind mount directories are owned by ansible_user
+  ansible.builtin.file:
+    path: "{{ item }}"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+  loop: "{{ bind_mount_paths }}"
