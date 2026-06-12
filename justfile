@@ -4,7 +4,11 @@
 run *args:
   ansible-playbook -i inventory/hosts.ini site.yml --vault-password-file vault-password.sh {{args}}
 
+decrypt:
+  ansible-vault decrypt --vault-password-file vault-password.sh inventory/group_vars/homelab/vault.yml
 
+encrypt:
+  ansible-vault encrypt --vault-password-file vault-password.sh inventory/group_vars/homelab/vault.yml
 
 # updates submodules
 sub-update:
