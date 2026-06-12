@@ -8,4 +8,4 @@ htpasswd_filename = /etc/radicale/users
 htpasswd_encryption = autodetect
 
 [storage]
-filesystem_folder = ~/.var/lib/radicale/collections
+filesystem_folder = /var/lib/radicale/collections
