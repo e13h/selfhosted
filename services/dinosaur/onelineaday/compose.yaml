@@ -5,7 +5,7 @@ services:
     ports:
       - "3800:3000"
     volumes:
-      - ./db:/app/db
+      - onelineaday-data:/app/db
     environment:
       - NODE_ENV=production
       - PORT=3000
@@ -16,6 +16,10 @@ services:
       tsdproxy.name: "onelineaday"
       tsdproxy.ephemeral: "false"
     restart: unless-stopped
+    depends_on:
+      tsdproxy:
+        condition: service_healthy
+        restart: true
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
       interval: 30s
@@ -23,6 +27,10 @@ services:
       retries: 3
       start_period: 5s
 
-networks:
-  tsdproxy:
-    external: true
+volumes:
+  onelineaday-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "{{ appdata_path }}/apps/onelineaday"
