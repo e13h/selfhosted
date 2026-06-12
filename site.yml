@@ -10,3 +10,5 @@
       tags: tailscale
     - role: ansible-role-docker-compose-generator
       tags: services
+    - role: compose-volumes
+      tags: services
