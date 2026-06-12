@@ -5,11 +5,10 @@ services:
     volumes:
       - fizzy-data:/rails/storage
     environment:
-      # TODO put these in an ansible var
-      SECRET_KEY_BASE: REDACTED
-      BASE_URL: https://fizzy.brown-pinecone.ts.net
-      VAPID_PRIVATE_KEY: REDACTED
-      VAPID_PUBLIC_KEY: BG0J99a12hJYYi-9LlcfU6t_pX1AwkMq6WZyWi58yh8rREDACTED
+      SECRET_KEY_BASE: "{{ vault_fizzy_secret_key_base }}"
+      BASE_URL: "https://fizzy.{{ vault_tailscale_magicdns_domain }}"
+      VAPID_PRIVATE_KEY: "{{ vault_fizzy_vapid_private_key }}"
+      VAPID_PUBLIC_KEY: "{{ vault_fizzy_vapid_public_key }}"
     ports:
       - "8180:80"
     labels:
