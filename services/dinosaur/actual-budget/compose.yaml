@@ -1,24 +1,33 @@
----
 services:
-  actual_server:
-    image: ghcr.io/e13h/actual-server:edge-alpine
+  actual-budget:
+    image: ghcr.io/actualbudget/actual:nightly-alpine
     container_name: actual-budget
     ports:
       - '5006:5006'
     volumes:
-      - ./actual-data:/data
+      - actual-budget-data:/data
     labels:
       tsdproxy.enable: "true"
       tsdproxy.name: "actual"
       tsdproxy.ephemeral: "false"
     networks:
       - tsdproxy
+    depends_on:
+      tsdproxy:
+        condition: service_healthy
+        restart: true
     restart: unless-stopped
     environment:
-      - ACTUAL_OPENID_ENFORCE=true
-    env_file:
-      - .env
+      ACTUAL_OPENID_ENFORCE: "true"
+      ACTUAL_OPENID_DISCOVERY_URL: "https://pocket-id.{{ vault_tailscale_magicdns_domain }}/.well-known/openid-configuration"
+      ACTUAL_OPENID_CLIENT_ID: "{{ vault_actual_budget_openid_client_id }}"
+      ACTUAL_OPENID_CLIENT_SECRET: "{{ vault_actual_budget_openid_client_secret }}"
+      ACTUAL_OPENID_SERVER_HOSTNAME: "https://actual.{{ vault_tailscale_magicdns_domain }}"
 
-networks:
-  tsdproxy:
-    external: true
+volumes:
+  actual-budget-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "{{ appdata_path }}/apps/actual-budget"
