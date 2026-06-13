@@ -2,6 +2,7 @@ services:
   fizzy:
     image: ghcr.io/basecamp/fizzy:main
     container_name: fizzy
+    user: "0:0"
     volumes:
       - fizzy-data:/rails/storage
     environment:
