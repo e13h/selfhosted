@@ -1,9 +1,1 @@
-ts-authkey.txt
-vaultwarden-data/
-actual-data/
 .env
-immich/library/
-immich/postgres/
-radicale/config/users
-radicale/data/
-mealie/data/
