@@ -23,7 +23,9 @@ services:
     labels:
       tsdproxy.enable: "true"
       tsdproxy.name: "pocket-id"
-      tsdproxy.ephemeral: "false"
+      tsdproxy.ephemeral: "true"
+      tsdproxy.port.1: "443/https:1411/http"
+      tsdproxy.dash.category: "Infrastructure"
     networks:
       - tsdproxy
     depends_on:

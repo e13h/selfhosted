@@ -22,7 +22,9 @@ services:
     labels:
       tsdproxy.enable: "true"
       tsdproxy.name: "vaultwarden"
-      tsdproxy.ephemeral: "false"
+      tsdproxy.ephemeral: "true"
+      tsdproxy.port.1: "443/https:80/http"
+      tsdproxy.dash.category: "Productivity"
     networks:
       - tsdproxy
     depends_on:

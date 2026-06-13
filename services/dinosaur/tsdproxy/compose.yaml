@@ -1,0 +1,44 @@
+services:
+  tsdproxy:
+    image: almeidapaulopt/tsdproxy:2
+    container_name: tsdproxy
+    healthcheck:
+      test: ["CMD", "/healthcheck"]
+      interval: 5s
+      timeout: 3s
+      start_period: 5s
+      retries: 5
+    volumes:
+      - ${XDG_RUNTIME_DIR:?error}/docker.sock:/var/run/docker.sock
+      - tsdproxy-data:/data
+      - tsdproxy-config:/config
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    networks:
+      - tsdproxy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    labels:
+      tsdproxy.enable: "true"
+      tsdproxy.name: "dinodash"
+      tsdproxy.port.1: "443/https:8080/http"
+      tsdproxy.ephemeral: "true"
+      tsdproxy.dash.visible: "false"
+
+networks:
+  tsdproxy:
+
+volumes:
+  tsdproxy-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "{{ appdata_path }}/apps/tsdproxy/data"
+  tsdproxy-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "{{ appdata_path }}/apps/tsdproxy/config"

@@ -28,8 +28,10 @@ services:
     labels:
       tsdproxy.enable: "true"
       tsdproxy.name: "karakeep"
-      tsdproxy.container_port: 3000
-      tsdproxy.ephemeral: "false"
+      tsdproxy.ephemeral: "true"
+      tsdproxy.port.1: "443/https:3000/http"
+      tsdproxy.dash.category: "Productivity"
+      tsdproxy.dash.icon: "sh/karakeep"
   karakeep-chrome:
     image: gcr.io/zenika-hub/alpine-chrome:123
     restart: unless-stopped
