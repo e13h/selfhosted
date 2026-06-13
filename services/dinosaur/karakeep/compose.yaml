@@ -1,0 +1,72 @@
+services:
+  karakeep:
+    image: ghcr.io/karakeep-app/karakeep:release
+    container_name: karakeep
+    restart: unless-stopped
+    volumes:
+      - karakeep-data:/data
+    ports:
+      - 3000:3000
+    environment:
+      MEILI_ADDR: http://karakeep-meilisearch:7700
+      BROWSER_WEB_URL: http://karakeep-chrome:9222
+      NEXTAUTH_SECRET: "{{ vault_hoarder_nextauth_secret }}"
+      NEXTAUTH_URL: http://localhost:3000
+      # OPENAI_API_KEY: ...
+      DATA_DIR: /data
+    networks:
+      - tsdproxy
+      - karakeep
+    depends_on:
+      tsdproxy:
+        condition: service_healthy
+        restart: true
+      karakeep-meilisearch:
+        condition: service_started
+      karakeep-chrome:
+        condition: service_started
+    labels:
+      tsdproxy.enable: "true"
+      tsdproxy.name: "karakeep"
+      tsdproxy.container_port: 3000
+      tsdproxy.ephemeral: "false"
+  karakeep-chrome:
+    image: gcr.io/zenika-hub/alpine-chrome:123
+    restart: unless-stopped
+    command:
+      - --no-sandbox
+      - --disable-gpu
+      - --disable-dev-shm-usage
+      - --remote-debugging-address=0.0.0.0
+      - --remote-debugging-port=9222
+      - --hide-scrollbars
+    networks:
+      - karakeep
+      
+  karakeep-meilisearch:
+    image: getmeili/meilisearch:v1.11.1
+    restart: unless-stopped
+    environment:
+      MEILI_NO_ANALYTICS: "true"
+      MEILI_MASTER_KEY: "{{ vault_hoarder_meili_master_key }}"
+    volumes:
+      - karakeep-meilisearch:/meili_data
+    networks:
+      - karakeep
+
+volumes:
+  karakeep-meilisearch:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "{{ appdata_path }}/apps/karakeep/meilisearch"
+  karakeep-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "{{ appdata_path }}/apps/karakeep/data"
+
+networks:
+  karakeep:
