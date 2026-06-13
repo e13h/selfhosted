@@ -18,10 +18,17 @@ services:
       TZ: America/Los_Angeles
       OIDC_AUTH_ENABLED: true
       ALLOW_PASSWORD_LOGIN: false
-    env_file:
-      - .env
+      OIDC_CONFIGURATION_URL: "https://pocket-id.{{ vault_tailscale_magicdns_domain }}/.well-known/openid-configuration"
+      OIDC_CLIENT_ID: "{{ vault_mealie_oidc_client_id }}"
+      OIDC_CLIENT_SECRET: "{{ vault_mealie_oidc_client_secret }}"
+      OIDC_PROVIDER_NAME: "Pocket ID"
+      BASE_URL: "https://mealie.{{ vault_tailscale_magicdns_domain }}"
     networks:
       - tsdproxy
+    depends_on:
+      tsdproxy:
+        condition: service_healthy
+        restart: true
     labels:
       tsdproxy.enable: "true"
       tsdproxy.name: "mealie"
@@ -33,8 +40,4 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ./data
-
-networks:
-  tsdproxy:
-    external: true
+      device: "{{ appdata_path }}/apps/mealie"
