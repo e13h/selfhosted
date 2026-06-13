@@ -13,7 +13,7 @@ services:
     labels:
       tsdproxy.enable: "true"
       tsdproxy.name: "metube"
-      tsdproxy.ephemeral: "true"
+      tsdproxy.ephemeral: "false"
       tsdproxy.port.1: "443/https:8081/http"
       tsdproxy.dash.category: "Media"
     networks:

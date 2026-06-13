@@ -12,7 +12,7 @@ services:
     labels:
       tsdproxy.enable: "true"
       tsdproxy.name: "pinchflat"
-      tsdproxy.ephemeral: "true"
+      tsdproxy.ephemeral: "false"
       tsdproxy.port.1: "443/https:8945/http"
       tsdproxy.dash.category: "Media"
       tsdproxy.dash.icon: "sh/pinchflat"
