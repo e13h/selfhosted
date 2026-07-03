@@ -1,0 +1,65 @@
+---
+# roles/samba_share/defaults/main.yml
+
+# Package/service names (Debian/Ubuntu defaults; override for other distros)
+samba_packages:
+  - samba
+  - samba-common-bin
+
+samba_service_name: smbd
+samba_manage_nmbd: true
+samba_nmbd_service_name: nmbd
+
+# Global smb.conf settings
+samba_workgroup: WORKGROUP
+samba_server_string: "Samba on %h"
+samba_security: user
+samba_map_to_guest: "Bad User"
+
+# macOS/Time Machine friendliness. mDNS/Avahi is optional and separate
+# from this role -- see README if you want reptile.local discovery.
+samba_vfs_objects: "catia fruit streams_xattr"
+samba_fruit_metadata: stream
+samba_fruit_model: MacSamba
+
+# List of shares to create. Each item:
+#   name: share name as it will appear on the network
+#   path: absolute path on the host being shared
+#   comment: description shown to clients
+#   valid_users: list of local users allowed to connect (omit for guest-only)
+#   read_only: yes/no
+#   guest_ok: yes/no
+#   create_mask / directory_mask: unix perms applied to new files/dirs
+#   owner / group: unix ownership to enforce on the path
+samba_shares:
+  - name: data
+    path: /data
+    comment: "{{ inventory_hostname }} /data share"
+    valid_users:
+      - "{{ samba_default_user }}"
+    read_only: false
+    guest_ok: false
+    create_mask: "0664"
+    directory_mask: "0775"
+    owner: "{{ samba_default_user }}"
+    group: "{{ samba_default_group | default(samba_default_user) }}"
+
+# Default samba user to create and grant access to the share above.
+# Override samba_default_user or pass your own samba_users list instead.
+samba_default_user: "{{ ansible_user }}"
+samba_default_group: "{{ ansible_user }}"
+
+# List of samba users to create/set passwords for via smbpasswd.
+# password is REQUIRED and should come from ansible-vault or an
+# environment-backed lookup -- never commit it in plaintext.
+samba_users:
+  - name: "{{ ansible_user }}"
+    password: "{{ vault_samba_password }}"
+
+# Whether this role should manage the host firewall (ufw) for Samba ports.
+samba_manage_firewall: true
+
+# Restrict Samba to Tailscale and LAN.
+samba_firewall_allowed_sources:
+  - "100.64.0.0/10"
+  - "192.168.1.0/24"

@@ -1,0 +1,15 @@
+---
+# roles/samba_share/handlers/main.yml
+
+- name: restart samba
+  ansible.builtin.systemd:
+    name: "{{ samba_service_name }}"
+    state: restarted
+  become: true
+
+- name: restart nmbd
+  ansible.builtin.systemd:
+    name: "{{ samba_nmbd_service_name }}"
+    state: restarted
+  when: samba_manage_nmbd
+  become: true
