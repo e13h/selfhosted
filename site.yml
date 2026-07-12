@@ -8,6 +8,8 @@
       tags: docker
     - role: tailscale
       tags: tailscale
+    - role: samba
+      tags: samba
     - role: ansible-role-docker-compose-generator
       tags: services
     - role: compose-volumes
