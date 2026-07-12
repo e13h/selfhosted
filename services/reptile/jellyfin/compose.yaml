@@ -8,8 +8,11 @@ services:
     volumes:
       - jellyfin-config:/config
       - jellyfin-cache:/cache
-      - jellyfin-movies:/movies:ro
       - jellyfin-youtube:/youtube:ro
+    group_add:
+      - render
+    devices:
+      - /dev/dri/renderD128:/dev/dri/renderD128
     restart: unless-stopped
     labels:
       tsdproxy.enable: "true"
@@ -37,12 +40,6 @@ volumes:
       type: none
       o: bind
       device: "{{ appdata_path }}/apps/jellyfin/cache"
-  jellyfin-movies:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: "{{ storage_path }}/movies"
   jellyfin-youtube:
     driver: local
     driver_opts:
