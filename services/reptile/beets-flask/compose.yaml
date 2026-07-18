@@ -1,0 +1,68 @@
+services:
+  beets-flask:
+    image: pspitzner/beets-flask:latest
+    container_name: beets-flask
+    entrypoint:
+      - "/bin/sh"
+      - "-c"
+      - "/repo/entrypoint_fix_permissions.sh && /repo/entrypoint_user_scripts.sh && /repo/entrypoint.sh"
+    volumes:
+      - beets-flask-config:/config
+      - beets-library:/music
+      - beets-flask-inbox-terminal:/inbox/terminal
+      - beets-flask-inbox-auto:/inbox/auto
+      - beets-flask-inbox-preview:/inbox/preview
+    environment:
+      TZ: America/Los_Angeles
+      VIRTUAL_ENV: /venv
+      PATH: /venv/bin:/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
+    #   USER_ID: 0
+    #   GROUP_ID: 0
+    # user: "0:0"
+    ports:
+      - "5001:5001"
+    labels:
+      tsdproxy.enable: "true"
+      tsdproxy.name: "beets-flask"
+      tsdproxy.ephemeral: "false"
+      tsdproxy.port.1: "443/https:5001/http"
+      tsdproxy.dash.category: "Music"
+    restart: unless-stopped
+    networks:
+      - tsdproxy
+    depends_on:
+      tsdproxy:
+        condition: service_healthy
+        restart: true
+
+volumes:
+  beets-flask-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "{{ appdata_path }}/apps/beets-flask/config"
+  beets-library:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "{{ storage_path }}/music"
+  beets-flask-inbox-terminal:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "{{ appdata_path }}/apps/beets-flask/inbox/terminal"
+  beets-flask-inbox-auto:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "{{ appdata_path }}/apps/beets-flask/inbox/auto"
+  beets-flask-inbox-preview:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "{{ appdata_path }}/apps/beets-flask/inbox/preview"
