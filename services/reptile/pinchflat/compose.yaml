@@ -3,7 +3,7 @@ services:
     image: ghcr.io/kieraneglin/pinchflat:latest
     container_name: pinchflat
     environment:
-      - TZ=America/Los_Angeles
+      - TZ="{{ timezone }}"
     ports:
       - '8945:8945'
     volumes:

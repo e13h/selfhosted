@@ -11,8 +11,8 @@ services:
       APP_URL: "https://pocket-id.{{ vault_tailscale_magicdns_domain }}"
       TRUST_PROXY: "false"
       MAXMIND_LICENSE_KEY: "{{ vault_maxmind_license_key }}"
-      PUID: 1000
-      PGID: 1000
+      PUID: "{{ ansible_user_uid }}"
+      PGID: "{{ ansible_user_gid }}"
       ENCRYPTION_KEY: "{{ vault_pocket_id_encryption_key }}"
     healthcheck:
       test: [ "CMD", "/app/pocket-id", "healthcheck" ]

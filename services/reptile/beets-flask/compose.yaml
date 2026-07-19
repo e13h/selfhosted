@@ -13,7 +13,7 @@ services:
       - beets-flask-inbox-auto:/inbox/auto
       - beets-flask-inbox-preview:/inbox/preview
     environment:
-      TZ: America/Los_Angeles
+      TZ: "{{ timezone }}"
       VIRTUAL_ENV: /venv
       PATH: /venv/bin:/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
     #   USER_ID: 0
