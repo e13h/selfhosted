@@ -1,1 +1,25 @@
 ansible_become_password: "{{ vault_become_password_reptile }}"
+
+samba_shares:
+  - name: data
+    path: /data
+    comment: "{{ inventory_hostname }} /data share"
+    valid_users:
+      - "{{ samba_default_user }}"
+    read_only: false
+    guest_ok: false
+    create_mask: "0664"
+    directory_mask: "0775"
+    owner: "{{ samba_default_user }}"
+    group: "{{ samba_default_group | default(samba_default_user) }}"
+  - name: beets-inbox
+    path: "{{ appdata_path }}/apps/beets-flask/inbox"
+    comment: "beets-flask inbox"
+    valid_users:
+      - "{{ samba_default_user }}"
+    read_only: false
+    guest_ok: false
+    create_mask: "0664"
+    directory_mask: "0775"
+    owner: "{{ samba_default_user }}"
+    group: "{{ samba_default_group | default(samba_default_user) }}"
