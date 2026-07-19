@@ -68,14 +68,12 @@ asciify_paths: yes
 threaded: no
 
 fetchart:
-    minwidth: 500
+    minwidth: 250
     enforce_ratio: 10px # yes|no or tolerance around 1:1 ratio
     sources:
         - filesystem
         - coverart: release
-        - itunes
         - coverart: releasegroup
-        - '*'
 
 embedart:
     auto: yes
