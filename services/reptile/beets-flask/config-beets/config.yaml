@@ -16,7 +16,6 @@ plugins: [
         missing,
         albumtypes,
         scrub,
-        zero,
         mbsync,
         duplicates,
         convert,
@@ -38,6 +37,13 @@ import:
     quiet_fallback: skip
     detail: yes
     duplicate_action: ask # ask|skip|merge|keep|remove
+    set_fields:
+        navidrome_library: unassigned
+
+paths:
+    default: $navidrome_library/$albumartist/$album%aunique{}/$track $title
+    singleton: $navidrome_library/Non-Album/$artist/$title
+    comp: $navidrome_library/Compilations/$album%aunique{}/$track $title
 
 ui:
     color: yes
