@@ -74,8 +74,8 @@ asciify_paths: yes
 threaded: no
 
 fetchart:
-    minwidth: 250
-    enforce_ratio: 10px # yes|no or tolerance around 1:1 ratio
+    minwidth: 0
+    enforce_ratio: no
     sources:
         - filesystem
         - coverart: release
