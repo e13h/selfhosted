@@ -14,8 +14,8 @@ services:
       - mealie-data:/app/data/
     environment:
       ALLOW_SIGNUP: false
-      PUID: "{{ ansible_user_uid }}"
-      PGID: "{{ ansible_user_gid }}"
+      PUID: "{{ ansible_facts['user_uid'] }}"
+      PGID: "{{ ansible_facts['user_gid'] }}"
       TZ: "{{ timezone }}"
       OIDC_AUTH_ENABLED: true
       ALLOW_PASSWORD_LOGIN: false
