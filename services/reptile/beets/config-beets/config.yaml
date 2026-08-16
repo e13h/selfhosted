@@ -1,0 +1,96 @@
+plugins:
+  [
+    chroma,
+    # convert,
+    embedart,
+    fetchart,
+    mbsync,
+    musicbrainz,
+    replaygain,
+    scrub,
+    web,
+  ]
+directory: /music
+library: /config/library.db
+art_filename: albumart
+threaded: yes
+original_date: no
+per_disc_numbering: no
+asciify_paths: yes
+
+# convert:
+#   auto: no
+#   ffmpeg: /usr/bin/ffmpeg
+#   opts: -ab 320k -ac 2 -ar 48000
+#   max_bitrate: 320
+#   threads: 1
+
+paths:
+  default: $navidrome_library/$albumartist/$album%aunique{}/$track $title
+  singleton: $navidrome_library/Non-Album/$artist/$title
+  comp: $navidrome_library/Compilations/$album%aunique{}/$track $title
+
+musicbrainz:
+  external_ids:
+    discogs: yes
+    bandcamp: yes
+    spotify: yes
+    deezer: yes
+    beatport: yes
+    tidal: yes
+  search_limit: 2
+  extra_tags: [alias, barcode, country, label, media, tracks, year]
+  genres: yes
+
+import:
+  write: yes
+  copy: yes
+  move: no
+  resume: ask
+  incremental: yes
+  quiet_fallback: skip
+  detail: yes
+  timid: no
+  duplicate_action: ask
+  log: /config/beet.log
+  set_fields:
+    navidrome_library: unassigned
+
+embedart:
+  auto: yes
+  ifempty: no
+  remove_art_file: yes
+
+fetchart:
+  minwidth: 0
+  enforce_ratio: no
+  sources:
+    - filesystem
+    - coverart: release
+    - coverart: releasegroup
+
+replaygain:
+  auto: no
+  command: mp3gain
+
+scrub:
+  auto: yes
+
+replace:
+  '^\.': _
+  '[\x00-\x1f]': _
+  '[<>:"\?\*\|]': _
+  '[\xE8-\xEB]': e
+  '[\xEC-\xEF]': i
+  '[\xE2-\xE6]': a
+  '[\xF2-\xF6]': o
+  '[\xF8]': o
+  '\.$': _
+  '\s+$': ""
+
+ui:
+  color: yes
+
+web:
+  host: 0.0.0.0
+  port: 8337
