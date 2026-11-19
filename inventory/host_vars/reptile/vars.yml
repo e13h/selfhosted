@@ -13,7 +13,7 @@ samba_shares:
     owner: "{{ samba_default_user }}"
     group: "{{ samba_default_group | default(samba_default_user) }}"
   - name: beets-inbox
-    path: "{{ appdata_path }}/apps/beets-flask/inbox"
+    path: "{{ appdata_path }}/apps/beets/ingest"
     comment: "beets-flask inbox"
     valid_users:
       - "{{ samba_default_user }}"

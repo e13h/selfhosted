@@ -6,9 +6,11 @@ services:
       - beets-config:/config
       - beets-library:/music
       - beets-ingest:/downloads
+      - beets-custom-cont-init.d:/custom-cont-init.d:ro
+      - beets-custom-services.d:/custom-services.d:ro
     environment:
-      PUID: "{{ ansible_facts['user_uid'] }}"
-      PGID: "{{ ansible_facts['user_gid'] }}"
+      PUID: "0"  # rootless docker: container root == host user
+      PGID: "0"
       TZ: "{{ timezone }}"
     ports:
       - 8337:8337
@@ -17,6 +19,7 @@ services:
       tsdproxy.name: "beets"
       tsdproxy.ephemeral: "false"
       tsdproxy.port.1: "443/https:8337/http"
+      tsdproxy.port.2: "8338/https:8338/http"
       tsdproxy.dash.category: "Music"
       tsdproxy.dash.icon: "sh/beets"
     restart: unless-stopped
@@ -46,3 +49,15 @@ volumes:
       type: none
       o: bind
       device: "{{ appdata_path }}/apps/beets/ingest"
+  beets-custom-cont-init.d:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "{{ appdata_path }}/apps/beets/custom-cont-init.d"
+  beets-custom-services.d:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "{{ appdata_path }}/apps/beets/custom-services.d"

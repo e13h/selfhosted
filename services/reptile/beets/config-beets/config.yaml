@@ -9,6 +9,7 @@ plugins:
     replaygain,
     scrub,
     web,
+    webimport,
   ]
 directory: /music
 library: /config/library.db
@@ -30,6 +31,14 @@ paths:
   singleton: $navidrome_library/Non-Album/$artist/$title
   comp: $navidrome_library/Compilations/$album%aunique{}/$track $title
 
+match:
+  distance_weights:
+    # Mostly partial albums (a few tracks bought from an album): keep them
+    # matched to the full release without the default 0.9 weight pushing
+    # every partial match to ~0.5. Measured: correct release 0.49 -> 0.17
+    # for one track of 11; a wrong album stays at ~0.39.
+    missing_tracks: 0.1
+
 musicbrainz:
   external_ids:
     discogs: yes
@@ -44,10 +53,10 @@ musicbrainz:
 
 import:
   write: yes
-  copy: yes
-  move: no
+  copy: no
+  move: yes # webimport keeps each file's original bytes; Undo import restores them
   resume: ask
-  incremental: yes
+  incremental: no # yes silently skips re-imports after an undo; revisit with smarter caching
   quiet_fallback: skip
   detail: yes
   timid: no
@@ -56,12 +65,18 @@ import:
   set_fields:
     navidrome_library: unassigned
 
+chroma:
+  auto: no # don't fingerprint on import (~9s/album); `beet fingerprint` still works manually
+
 embedart:
   auto: yes
   ifempty: no
   remove_art_file: yes
 
 fetchart:
+  # Import-time art is chosen in webimport's review and set by webimport
+  # (embedart then embeds it). `beet fetchart` still works for manual use.
+  auto: no
   minwidth: 0
   enforce_ratio: no
   sources:
@@ -74,7 +89,7 @@ replaygain:
   command: mp3gain
 
 scrub:
-  auto: yes
+  auto: no # keep tags beets does not manage (iTunes IDs, gapless iTunSMPB, Sound Check, rtng); `beet scrub` still works manually
 
 replace:
   '^\.': _
@@ -94,3 +109,12 @@ ui:
 web:
   host: 0.0.0.0
   port: 8337
+
+webimport:
+  host: 0.0.0.0
+  port: 8338
+  inbox_dir: /downloads
+  navidrome:
+    url: "https://navidrome.{{ vault_tailscale_magicdns_domain }}"
+    user: webimport
+    password: "{{ vault_navidrome_bot_password }}"
