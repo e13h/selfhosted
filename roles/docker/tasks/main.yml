@@ -126,3 +126,26 @@
     path: "/home/{{ ansible_user }}/.bashrc"
     line: "export DOCKER_HOST=unix:///run/user/{{ admin_uid.stdout }}/docker.sock"
     create: true
+
+- name: Delegate cpuset controller to rootless docker user services
+  copy:
+    dest: /etc/systemd/system/user@.service.d/delegate.conf
+    content: |
+      [Service]
+      Delegate=cpu cpuset io memory pids
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  register: cpuset_delegate
+
+- name: Reload systemd daemon
+  systemd:
+    daemon_reload: true
+  become: true
+  when: cpuset_delegate.changed
+
+- name: Notify that a reboot is required for cgroup delegation to take effect
+  debug:
+    msg: "cpuset delegation changed — reboot {{ inventory_hostname }} for it to take effect."
+  when: cpuset_delegate.changed

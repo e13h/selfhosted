@@ -1,1 +1,4 @@
 ansible_become_password: "{{ vault_become_password_falcon }}"
+arm_share_mountpoint: /mnt/music-inbox
+rootless_docker_user: "{{ ansible_user }}"
+# TODO add 'arm_rippers' to disabled_compose_files if there are no `/dev/sr#` drive devices

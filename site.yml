@@ -10,7 +10,24 @@
       tags: tailscale
     - role: samba
       tags: samba
+
+- name: Generate docker compose files
+  hosts: homelab
+  become: false
+  roles:
     - role: ansible-role-docker-compose-generator
       tags: services
+
+- name: Create compose volume directories
+  hosts: homelab
+  become: true
+  roles:
     - role: compose-volumes
+      tags: services
+
+- name: Apply falcon-specific roles
+  hosts: falcon
+  become: true
+  roles:
+    - role: automatic-ripping-machine
       tags: services

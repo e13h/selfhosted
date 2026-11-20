@@ -52,4 +52,4 @@
     path: "{{ item }}"
     owner: "{{ ansible_user }}"
     group: "{{ ansible_user }}"
-  loop: "{{ bind_mount_paths }}"
+  loop: "{{ bind_mount_paths | select('match', '^/home/' + ansible_user) | list }}"

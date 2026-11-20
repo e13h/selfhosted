@@ -1,0 +1,80 @@
+services:
+  arm-rippers:
+    image: automaticrippingmachine/automatic-ripping-machine:latest
+    container_name: arm-rippers
+    user: "0:0"
+    restart: unless-stopped
+    ports:
+      - "8085:8080"
+    environment:
+      ARM_UID: 0
+      ARM_GID: 0
+      TZ: "{{ timezone }}"
+    volumes:
+      - arm-home:/home/arm
+      - arm-config:/etc/arm/config
+      - arm-logs:/home/arm/logs
+      - arm-music:/home/arm/music
+      - arm-media:/home/arm/media
+      - arm-completed:/home/arm/media/completed
+      - "{{ appdata_path }}/apps/arm/config-override/arm_user_files_setup.sh:/etc/my_init.d/arm_user_files_setup.sh:ro"
+    devices:
+      # TODO use ansible template for finding drives instead of hardcoding
+      - "/dev/sr0:/dev/sr0"
+      - "/dev/sg1:/dev/sg1"
+      # - "/dev/sr1:/dev/sr1"
+      # - "/dev/sr2:/dev/sr2"
+      # - "/dev/sr3:/dev/sr3"
+    # cpuset: "2,3"
+    cap_add:
+      - SYS_RAWIO
+    networks:
+      - tsdproxy
+    depends_on:
+      tsdproxy:
+        condition: service_healthy
+        restart: true
+    labels:
+      tsdproxy.enable: "true"
+      tsdproxy.name: "arm"
+      tsdproxy.ephemeral: "false"
+      tsdproxy.port.1: "443/https:8080/http"
+      tsdproxy.dash.category: "Media"
+
+volumes:
+  arm-home:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "{{ appdata_path }}/apps/arm"
+  arm-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "{{ appdata_path }}/apps/arm/config"
+  arm-logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "{{ appdata_path }}/apps/arm/logs"
+  arm-music:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "{{ arm_share_mountpoint }}/preview"
+  arm-media:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "{{ appdata_path }}/apps/arm/media"
+  arm-completed:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "{{ storage_path }}/movies"
