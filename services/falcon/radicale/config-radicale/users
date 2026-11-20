@@ -1,0 +1,3 @@
+shared:{{ vault_radicale_shared_user_password }}
+evan:{{ vault_radicale_evan_user_password }}
+emma:{{ vault_radicale_emma_user_password }}
