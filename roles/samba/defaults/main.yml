@@ -17,7 +17,7 @@ samba_security: user
 samba_map_to_guest: "Bad User"
 
 # macOS/Time Machine friendliness. mDNS/Avahi is optional and separate
-# from this role -- see README if you want reptile.local discovery.
+# from this role -- see README if you want xwing.local discovery.
 samba_vfs_objects: "catia fruit streams_xattr"
 samba_fruit_metadata: stream
 samba_fruit_model: MacSamba
