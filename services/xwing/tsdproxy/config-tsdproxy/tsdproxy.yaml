@@ -5,11 +5,6 @@ docker:
     targetHostname: host.docker.internal
     defaultProxyProvider: default
     tryDockerInternalNetwork: true
-  # falcon:
-  #   host: ssh://falcon.brown-pinecone.ts.net
-  #   targetHostname: ""
-  #   defaultProxyProvider: default
-  #   tryDockerInternalNetwork: true
 lists: {}
 tailscale:
   providers:
