@@ -1,4 +1,4 @@
-ansible_become_password: "{{ vault_become_password_reptile }}"
+ansible_become_password: "{{ vault_become_password_xwing }}"
 
 samba_shares:
   - name: data

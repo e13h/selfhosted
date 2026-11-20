@@ -12,6 +12,8 @@ services:
       - ${XDG_RUNTIME_DIR:?error}/docker.sock:/var/run/docker.sock
       - tsdproxy-data:/data
       - tsdproxy-config:/config
+      # - "{{ appdata_path }}/apps/tsdproxy/ssh-config/config:/root/.ssh/config:ro"
+      # - "{{ appdata_path }}/apps/tsdproxy/ssh-config/id_ed25519:/root/.ssh/id_ed25519:ro"
     ports:
       - "8080:8080"
     restart: unless-stopped

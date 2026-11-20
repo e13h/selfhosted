@@ -1,6 +1,7 @@
 services:
   actual-budget:
-    image: ghcr.io/actualbudget/actual:nightly-alpine
+    # image: ghcr.io/actualbudget/actual:nightly-alpine
+    image: e13h/actual-server:homelab
     container_name: actual-budget
     ports:
       - '5006:5006'
