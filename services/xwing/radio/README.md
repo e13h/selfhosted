@@ -30,7 +30,11 @@ covers how the radio works, the DJ booth, local demo and dry runs.
    ```
    After changing `stations.yaml`, redeploy and `docker compose restart radio-dj`.
 
-To upgrade, bump both image tags in `compose.yaml`, redeploy, then
+Both images track `:0.1`, so patch releases (`v0.1.x`) need no edit here:
+`docker compose pull radio-dj && docker compose up -d radio-dj` on xwing. That
+leaves `radio-liquidsoap` (and the stream) running; it only needs a pull and
+restart when `radio.liq` changes. For a new minor version, bump both image tags
+in `compose.yaml`, redeploy, then
 `docker compose pull radio-dj radio-liquidsoap && docker compose up -d`.
 
 History is in `{{ appdata_path }}/apps/radio/data/radio.db` (SQLite).

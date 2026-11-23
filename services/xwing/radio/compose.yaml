@@ -70,9 +70,9 @@ services:
       - radio-media:/media:ro
     networks:
       - tsdproxy
+    # Not radio-dj: Compose would recreate this (dropping the stream) on every
+    # radio-dj update. Liquidsoap retries the DJ every 5s and plays what it has.
     depends_on:
-      radio-dj:
-        condition: service_healthy
       radio-icecast:
         condition: service_started
 
