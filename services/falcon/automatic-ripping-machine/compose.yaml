@@ -25,7 +25,6 @@ services:
       # - "/dev/sr1:/dev/sr1"
       # - "/dev/sr2:/dev/sr2"
       # - "/dev/sr3:/dev/sr3"
-    # cpuset: "2,3"
     cap_add:
       - SYS_RAWIO
     networks:
