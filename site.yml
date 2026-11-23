@@ -10,6 +10,17 @@
       tags: tailscale
     - role: samba
       tags: samba
+    - role: borgmatic
+      tags: backup
+
+# Mounts the CIFS share that compose-volumes creates bind dirs inside,
+# so it must run before compose-volumes.
+- name: Apply falcon-specific roles
+  hosts: falcon
+  become: true
+  roles:
+    - role: automatic-ripping-machine
+      tags: services
 
 - name: Generate docker compose files
   hosts: homelab
@@ -23,11 +34,4 @@
   become: true
   roles:
     - role: compose-volumes
-      tags: services
-
-- name: Apply falcon-specific roles
-  hosts: falcon
-  become: true
-  roles:
-    - role: automatic-ripping-machine
       tags: services
