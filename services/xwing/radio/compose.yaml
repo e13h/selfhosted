@@ -81,12 +81,11 @@ services:
     image: libretime/icecast:2.4.4
     container_name: radio-icecast
     restart: unless-stopped
-    environment:
-      ICECAST_SOURCE_PASSWORD: "{{ vault_radio_icecast_source_password }}"
-      ICECAST_ADMIN_PASSWORD: "{{ vault_radio_icecast_admin_password }}"
-      ICECAST_RELAY_PASSWORD: "{{ vault_radio_icecast_admin_password }}"
-      ICECAST_HOSTNAME: "radio-stream.{{ vault_tailscale_magicdns_domain }}"
-      ICECAST_MAX_SOURCES: "10"
+    # Config (burst size, passwords) is config-icecast/icecast.xml; the image's
+    # ICECAST_* env vars only edit its own /etc/icecast.xml, which isn't used.
+    command: ["icecast", "-c", "/config/icecast.xml"]
+    volumes:
+      - radio-icecast-config:/config:ro
     ports:
       - "8010:8000"
     labels:
@@ -103,6 +102,12 @@ services:
         restart: true
 
 volumes:
+  radio-icecast-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "{{ appdata_path }}/apps/radio/icecast"
   radio-config:
     driver: local
     driver_opts:
