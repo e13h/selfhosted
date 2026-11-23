@@ -23,3 +23,23 @@ samba_shares:
     directory_mask: "0775"
     owner: "{{ samba_default_user }}"
     group: "{{ samba_default_group | default(samba_default_user) }}"
+
+borgmatic_cron_hour: "3"
+borgmatic_cron_minute: "35"
+borgmatic_exclude_patterns:
+  - "{{ appdata_path }}/apps/navidrome/cache"    # transcode/image cache
+  - "{{ appdata_path }}/apps/beets/ingest"       # music inbox (media)
+  - "{{ appdata_path }}/apps/beets-flask/inbox"  # old beets-flask music inbox (media)
+borgmatic_sqlite_databases:
+  - name: audiobookshelf
+    path: "{{ appdata_path }}/apps/audiobookshelf/config/absdatabase.sqlite"
+  - name: fizzy
+    path: "{{ appdata_path }}/apps/fizzy/production.sqlite3"
+  - name: navidrome
+    path: "{{ appdata_path }}/apps/navidrome/navidrome.db"
+  - name: jellyfin
+    path: "{{ appdata_path }}/apps/jellyfin/config/data/jellyfin.db"
+  - name: pinchflat
+    path: "{{ appdata_path }}/apps/pinchflat/db/pinchflat.db"
+  - name: beets
+    path: "{{ appdata_path }}/apps/beets/config/library.db"

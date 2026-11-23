@@ -1,0 +1,89 @@
+- name: Install borg, borgmatic and sqlite3
+  ansible.builtin.apt:
+    name:
+      - borgbackup
+      - borgmatic
+      - sqlite3
+    state: present
+
+- name: Create root .ssh directory
+  ansible.builtin.file:
+    path: "{{ borgmatic_ssh_key | dirname }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+
+- name: Check for an existing BorgBase key to reuse
+  ansible.builtin.stat:
+    path: "{{ borgmatic_seed_ssh_key }}"
+  register: borgmatic_seed_key
+
+- name: Reuse existing BorgBase key for root
+  ansible.builtin.copy:
+    src: "{{ borgmatic_seed_ssh_key }}{{ item }}"
+    dest: "{{ borgmatic_ssh_key }}{{ item }}"
+    remote_src: true
+    force: false
+    owner: root
+    group: root
+    mode: "{{ '0644' if item else '0600' }}"
+  loop: ["", ".pub"]
+  when: borgmatic_seed_key.stat.exists
+
+- name: Generate BorgBase SSH key for root
+  ansible.builtin.command:
+    cmd: ssh-keygen -t ed25519 -N "" -C "borgmatic@{{ inventory_hostname }}" -f {{ borgmatic_ssh_key }}
+    creates: "{{ borgmatic_ssh_key }}"
+
+- name: Read BorgBase public key
+  ansible.builtin.slurp:
+    src: "{{ borgmatic_ssh_key }}.pub"
+  register: borgmatic_pubkey
+
+- name: Show BorgBase public key (must be authorized on the BorgBase repo)
+  ansible.builtin.debug:
+    msg: "{{ borgmatic_pubkey.content | b64decode | trim }}"
+
+- name: Create borgmatic config directory
+  ansible.builtin.file:
+    path: "{{ borgmatic_config_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+
+- name: Write borgmatic config
+  ansible.builtin.template:
+    src: config.yaml.j2
+    dest: "{{ borgmatic_config_dir }}/config.yaml"
+    owner: root
+    group: root
+    mode: "0600"
+    validate: borgmatic config validate --config %s
+
+- name: Create local backup directory
+  ansible.builtin.file:
+    path: "{{ borgmatic_local_repo | dirname }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+
+- name: Initialize local borg repository
+  ansible.builtin.command:
+    cmd: >-
+      borgmatic --config {{ borgmatic_config_dir }}/config.yaml
+      rcreate --encryption {{ borgmatic_local_encryption }} --repository local
+    creates: "{{ borgmatic_local_repo }}/config"
+
+- name: Schedule nightly borgmatic run
+  ansible.builtin.cron:
+    name: borgmatic
+    user: root
+    hour: "{{ borgmatic_cron_hour }}"
+    minute: "{{ borgmatic_cron_minute }}"
+    job: >-
+      PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+      /usr/bin/borgmatic --config {{ borgmatic_config_dir }}/config.yaml
+      --verbosity -2 --syslog-verbosity 1

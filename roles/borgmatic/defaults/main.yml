@@ -1,0 +1,31 @@
+borgmatic_config_dir: /etc/borgmatic
+borgmatic_ssh_key: /root/.ssh/borgbase
+borgmatic_local_repo: /var/lib/backups/local.borg
+borgmatic_local_encryption: repokey-blake2
+# Existing per-user key to seed root's key from (falcon already has one registered at BorgBase).
+borgmatic_seed_ssh_key: "/home/{{ ansible_user }}/.ssh/borgbase"
+
+borgmatic_source_directories:
+  - "{{ appdata_path }}"
+
+# Paths/patterns excluded on every host. Media lives under storage_path, which
+# is never a source directory, so it is not backed up.
+borgmatic_common_exclude_patterns:
+  - "*.log"
+  - "{{ appdata_path }}/apps/jellyfin/cache"
+
+# Per-host extra excludes (caches, rebuildable indexes, media inboxes).
+borgmatic_exclude_patterns: []
+
+# SQLite databases to dump consistently with the sqlite3 CLI. The live file
+# (plus -wal/-shm) is excluded from the archive since the dump replaces it.
+# Any database NOT listed here is still backed up as a raw file.
+borgmatic_sqlite_databases: []
+
+borgmatic_keep_daily: 7
+borgmatic_keep_weekly: 4
+borgmatic_keep_monthly: 6
+
+# Cron time; stagger hosts because they share one BorgBase repo.
+borgmatic_cron_hour: "3"
+borgmatic_cron_minute: "5"

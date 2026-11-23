@@ -4,6 +4,11 @@
 run *args:
   ansible-playbook -i inventory/hosts.ini site.yml --vault-password-file vault-password.sh {{args}}
 
+# Back up now: just backup [falcon|xwing|homelab] [local|borgbase] (no repo = both)
+backup host="homelab" repo="":
+  ansible {{host}} -i inventory/hosts.ini --vault-password-file vault-password.sh -b -m shell \
+    -a 'borgmatic create --stats --verbosity 1 {{ if repo == "" { "" } else { "--repository " + repo } }}'
+
 decrypt:
   ansible-vault decrypt --vault-password-file vault-password.sh inventory/group_vars/homelab/vault.yml
 

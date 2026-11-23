@@ -2,3 +2,34 @@ ansible_become_password: "{{ vault_become_password_falcon }}"
 arm_share_mountpoint: /mnt/music-inbox
 rootless_docker_user: "{{ ansible_user }}"
 # TODO add 'arm_rippers' to disabled_compose_files if there are no `/dev/sr#` drive devices
+
+borgmatic_cron_hour: "3"
+borgmatic_cron_minute: "5"
+borgmatic_exclude_patterns:
+  - "{{ appdata_path }}/apps/arm/media"           # in-progress rips
+  - "{{ appdata_path }}/apps/arm/abcde.*"         # abcde CD rip temp dirs
+  - "{{ appdata_path }}/apps/karakeep/meilisearch" # search index, rebuildable from karakeep admin
+  - "{{ appdata_path }}/apps/pocket-id/GeoLite2-City.mmdb" # re-downloaded from MaxMind
+borgmatic_sqlite_databases:
+  - name: actual-server
+    path: "{{ appdata_path }}/apps/actual-budget/server-files/account.sqlite"
+  - name: actual-group-770d99c3
+    path: "{{ appdata_path }}/apps/actual-budget/user-files/group-770d99c3-a88f-4d67-afc7-a9d054b02cc5.sqlite"
+  - name: actual-group-09b278f5
+    path: "{{ appdata_path }}/apps/actual-budget/user-files/group-09b278f5-6610-4b4e-aaa4-145a4e5174b3.sqlite"
+  - name: timetagger
+    path: "{{ appdata_path }}/apps/timetagger/users/e13h~ZTEzaA==.db"
+  - name: vaultwarden
+    path: "{{ appdata_path }}/apps/vaultwarden/db.sqlite3"
+  - name: pocket-id
+    path: "{{ appdata_path }}/apps/pocket-id/pocket-id.db"
+  - name: onelineaday
+    path: "{{ appdata_path }}/apps/onelineaday/journal.db"
+  - name: mealie
+    path: "{{ appdata_path }}/apps/mealie/mealie.db"
+  - name: karakeep
+    path: "{{ appdata_path }}/apps/karakeep/data/db.db"
+  - name: jellyfin
+    path: "{{ appdata_path }}/apps/jellyfin/config/data/jellyfin.db"
+  - name: arm
+    path: "{{ appdata_path }}/apps/arm/db/arm.db"

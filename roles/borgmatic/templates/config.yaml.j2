@@ -1,0 +1,51 @@
+# {{ ansible_managed }}
+source_directories:
+{% for dir in borgmatic_source_directories %}
+  - {{ dir | to_json }}
+{% endfor %}
+source_directories_must_exist: true
+
+exclude_patterns:
+{% for pattern in borgmatic_common_exclude_patterns + borgmatic_exclude_patterns %}
+  - {{ pattern | to_json }}
+{% endfor %}
+{% for db in borgmatic_sqlite_databases %}
+{% for suffix in ['', '-wal', '-shm', '-journal'] %}
+  - {{ (db.path ~ suffix) | to_json }}
+{% endfor %}
+{% endfor %}
+exclude_caches: true
+
+repositories:
+  - path: {{ vault_borgbase_repo | to_json }}
+    label: borgbase
+  - path: {{ borgmatic_local_repo | to_json }}
+    label: local
+
+encryption_passphrase: {{ vault_borg_passphrase | to_json }}
+ssh_command: ssh -i {{ borgmatic_ssh_key }} -o StrictHostKeyChecking=accept-new
+compression: auto,zstd
+lock_wait: 900
+
+# Both hosts share one repo: name archives by host and only prune/check
+# this host's archives.
+archive_name_format: "{hostname}-{now:%Y-%m-%dT%H:%M:%S}"
+match_archives: "sh:{hostname}-*"
+
+keep_daily: {{ borgmatic_keep_daily }}
+keep_weekly: {{ borgmatic_keep_weekly }}
+keep_monthly: {{ borgmatic_keep_monthly }}
+
+checks:
+  - name: repository
+    frequency: 1 week
+  - name: archives
+    frequency: 2 weeks
+
+{% if borgmatic_sqlite_databases %}
+sqlite_databases:
+{% for db in borgmatic_sqlite_databases %}
+  - name: {{ db.name | to_json }}
+    path: {{ db.path | to_json }}
+{% endfor %}
+{% endif %}
