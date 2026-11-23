@@ -1,0 +1,123 @@
+services:
+  # The brains: picks tracks, writes DJ breaks with Claude, renders voices,
+  # serves the homepage + .pls playlists.
+  radio-dj:
+    # App source and image builds: https://github.com/e13h/radio-dj
+    image: ghcr.io/e13h/radio-dj:0.1
+    container_name: radio-dj
+    restart: unless-stopped
+    environment:
+      TZ: "{{ timezone }}"
+      NAVIDROME_URL: "http://navidrome:4533"
+      NAVIDROME_USER: "{{ vault_radio_navidrome_user }}"
+      NAVIDROME_PASSWORD: "{{ vault_radio_navidrome_password }}"
+      # Optional: read play counts/stats as your own Navidrome user instead of
+      # the bot. Leave empty to use the bot account for everything.
+      NAVIDROME_STATS_USER: "{{ vault_radio_navidrome_stats_user | default('') }}"
+      NAVIDROME_STATS_PASSWORD: "{{ vault_radio_navidrome_stats_password | default('') }}"
+      # Optional: without a key the DJs use template breaks.
+      ANTHROPIC_API_KEY: "{{ vault_anthropic_api_key | default('') }}"
+      # OPENAI_API_KEY: "{{ vault_openai_api_key | default('') }}"
+      # ELEVENLABS_API_KEY: "{{ vault_elevenlabs_api_key | default('') }}"
+    volumes:
+      - radio-config:/config:ro
+      - radio-data:/data
+      - radio-media:/media
+    labels:
+      tsdproxy.enable: "true"
+      tsdproxy.name: "radio"
+      tsdproxy.ephemeral: "false"
+      tsdproxy.port.1: "443/https:8080/http"
+      tsdproxy.dash.category: "Music"
+    networks:
+      - tsdproxy
+    depends_on:
+      tsdproxy:
+        condition: service_healthy
+        restart: true
+      navidrome:
+        condition: service_started
+      radio-kokoro:
+        condition: service_healthy
+
+  # Local text-to-speech (OpenAI-compatible API on :8880).
+  radio-kokoro:
+    image: ghcr.io/remsky/kokoro-fastapi-cpu:latest
+    container_name: radio-kokoro
+    restart: unless-stopped
+    healthcheck:
+      # Healthy once the voice model has loaded (takes ~10-30s on start).
+      test: ["CMD", "curl", "-sf", "http://127.0.0.1:8880/health"]
+      interval: 10s
+      timeout: 5s
+      start_period: 120s
+    networks:
+      - tsdproxy
+
+  # Mixes tracks + voice clips and encodes one stream per station.
+  radio-liquidsoap:
+    image: ghcr.io/e13h/radio-dj/liquidsoap:0.1  # keep in step with radio-dj
+    container_name: radio-liquidsoap
+    restart: unless-stopped
+    environment:
+      TZ: "{{ timezone }}"
+      DJ_URL: "http://radio-dj:8080"
+      ICECAST_HOST: "radio-icecast"
+      ICECAST_SOURCE_PASSWORD: "{{ vault_radio_icecast_source_password }}"
+      STATIONS: "main,kids"  # must match the station ids in stations.yaml
+      STREAM_BITRATE: "192"
+    volumes:
+      - radio-media:/media:ro
+    networks:
+      - tsdproxy
+    depends_on:
+      radio-dj:
+        condition: service_healthy
+      radio-icecast:
+        condition: service_started
+
+  # Serves the streams: https://radio-stream.<tailnet>/<station>.mp3
+  radio-icecast:
+    image: libretime/icecast:2.4.4
+    container_name: radio-icecast
+    restart: unless-stopped
+    environment:
+      ICECAST_SOURCE_PASSWORD: "{{ vault_radio_icecast_source_password }}"
+      ICECAST_ADMIN_PASSWORD: "{{ vault_radio_icecast_admin_password }}"
+      ICECAST_RELAY_PASSWORD: "{{ vault_radio_icecast_admin_password }}"
+      ICECAST_HOSTNAME: "radio-stream.{{ vault_tailscale_magicdns_domain }}"
+      ICECAST_MAX_SOURCES: "10"
+    ports:
+      - "8010:8000"
+    labels:
+      tsdproxy.enable: "true"
+      tsdproxy.name: "radio-stream"
+      tsdproxy.ephemeral: "false"
+      tsdproxy.port.1: "443/https:8000/http"
+      tsdproxy.dash.category: "Music"
+    networks:
+      - tsdproxy
+    depends_on:
+      tsdproxy:
+        condition: service_healthy
+        restart: true
+
+volumes:
+  radio-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "{{ appdata_path }}/apps/radio/config"
+  radio-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "{{ appdata_path }}/apps/radio/data"
+  radio-media:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "{{ appdata_path }}/apps/radio/media"

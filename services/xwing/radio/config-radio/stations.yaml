@@ -1,0 +1,141 @@
+# AI radio station configuration.
+#
+# This file is rendered by Ansible (Jinja) on deploy, so you can use vars
+# like timezone here, but don't put double curly braces in personas.
+# After editing, redeploy (just run --tags services) and restart radio-dj.
+
+timezone: "{{ timezone }}"
+public_url: "https://radio.{{ vault_tailscale_magicdns_domain }}"
+stream_url: "https://radio-stream.{{ vault_tailscale_magicdns_domain }}"
+library_refresh_minutes: 30
+
+# DJ scripts come from Claude when ANTHROPIC_API_KEY is set (and valid);
+# otherwise the DJs read a simple "That was X by Y" template.
+llm:
+  model: claude-haiku-5-5   # cheapest/fastest; try claude-sonnet-5-5 for livelier breaks
+  effort: low               # breaks are short; low effort keeps them quick and cheap
+  fallbacks: false          # server-side refusal fallback; Haiku doesn't support it
+
+# Voices. A DJ picks a provider by name (or uses default_provider).
+#   type: openai      -> any OpenAI-compatible /v1/audio/speech server
+#   type: elevenlabs  -> ElevenLabs API
+# API keys are read from the env var named in api_key_env (set it in compose).
+tts:
+  default_provider: kokoro
+  providers:
+    kokoro:
+      type: openai
+      base_url: http://radio-kokoro:8880/v1
+      model: kokoro
+      pronunciation: kokoro   # understands exact phonemes in `pronunciations`
+    # openai:
+    #   type: openai
+    #   base_url: https://api.openai.com/v1
+    #   model: gpt-4o-mini-tts
+    #   api_key_env: OPENAI_API_KEY
+    # elevenlabs:
+    #   type: elevenlabs
+    #   model: eleven_multilingual_v2
+    #   api_key_env: ELEVENLABS_API_KEY
+
+# The crew. `voice` is provider-specific (Kokoro: af_heart, af_bella,
+# af_nicole, am_michael, am_adam, am_puck, bf_emma, bm_george, ...; blends
+# like af_heart+af_bella work too). Optional `speed` (1.0 = normal).
+# Try changes first in the DJ booth: <public_url>/booth
+djs:
+  sunny:
+    name: Sunny
+    voice: af_heart
+    speed: 1.2
+    persona: |
+      Warm, upbeat host. Easy-going energy, light puns, loves connecting
+      songs to the moment, whatever the time of day. Never over the top.
+  cosmo:
+    name: Captain Cosmo
+    voice: am_puck
+    speed: 1.2
+    persona: |
+      A goofy, friendly space captain who hosts a radio show for kids.
+      Big enthusiasm, simple words, silly sound-free jokes, and the
+      occasional question for listeners to think about. Always kind.
+
+# Names the voices get wrong. Matched as whole words, ignoring case, and
+# applied only to the audio (the homepage still shows the real spelling).
+#   Name: /phonemes/        exact, Kokoro only (other voices say it as written)
+#   Name: Sound-alike       respelling, works with any voice
+#   Name: { phonemes: ..., say: ... }   both: phonemes where supported
+# To find phonemes, use "How does Kokoro say it?" in the DJ booth, then edit
+# what it shows. Test fixes with the booth's "speak this exact text".
+pronunciations:
+  Sade: { phonemes: "ʃɑdˈA", say: "Shah-day" }
+
+stations:
+  main:
+    name: Shuffle & Hum
+    description: Everything in the main library, hosted by Sunny.
+    library: main
+    audience: a household of adults
+    shuffle: rotation
+    # One DJ all day. To rotate hosts, add shifts, e.g.
+    # schedule:
+    #   - { dj: sunny, start: "06:00", end: "18:00" }
+    #   - { dj: someone_else, start: "18:00", end: "06:00" }
+    default_dj: sunny
+    talk:
+      every_n_tracks: 1
+      # Each break rolls one length by weight. `words` is the limit Claude
+      # gets; `extras` caps how many optional segments (coming up, fun fact,
+      # stats, time, station id) a break that long may include.
+      # Try changes with ./dryrun.sh main --seed <n>.
+      lengths:
+        short:  { words: 15, weight: 4, extras: 0 }
+        medium: { words: 35, weight: 3, extras: 1 }
+        long:   { words: 70, weight: 1 }
+      overlap_seconds: 0   # 0 = DJ never talks over music; up to 3 = talks over song ends/intros
+      segments:          # chance each extra shows up in a break (0-1)
+        coming_up: 0.5
+        fun_fact: 0.35
+        stats: 0.08
+        time_check: 0.15
+        station_id: 0.15
+    rotation:
+      favorites_share: 0.15   # share of picks from your most-played songs
+      artist_separation: 4
+      repeat_window: 0.5      # half the library plays before any repeat
+    deep_dive:
+      enabled: true
+      chance_per_track: 0.02
+      min_hours_between: 4
+      min_tracks: 5
+      max_tracks: 15
+    scrobble: false
+
+  kids:
+    name: Sprout FM
+    description: Songs from the kids library with Captain Cosmo.
+    library: kids
+    audience: young children (ages 3-8) and their parents; keep it simple, kind and G-rated
+    shuffle: rotation
+    default_dj: cosmo
+    talk:
+      every_n_tracks: 1
+      lengths:
+        short:  { words: 12, weight: 4, extras: 0 }
+        medium: { words: 25, weight: 3, extras: 1 }
+        long:   { words: 45, weight: 1 }
+      overlap_seconds: 0
+      segments:
+        coming_up: 0.6
+        fun_fact: 0.4
+        stats: 0.05
+        time_check: 0.1
+        station_id: 0.2
+    rotation:
+      favorites_share: 0.2
+      artist_separation: 2
+    deep_dive:
+      enabled: true
+      chance_per_track: 0.02
+      min_tracks: 4
+      max_tracks: 10
+    scrobble: false
