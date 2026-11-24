@@ -84,6 +84,29 @@
   ansible.builtin.command: update-grub
   when: grub_changed.changed
 
+# Headless: boot to multi-user.target so GDM/GNOME never start.
+# gdm.service is static (pulled in by graphical.target via display-manager.service),
+# so it can't be disabled directly; switching the default target is what keeps it off.
+- name: Get default systemd target
+  ansible.builtin.command: systemctl get-default
+  register: default_target
+  changed_when: false
+  check_mode: false
+
+- name: Boot to multi-user.target (no GUI)
+  ansible.builtin.command: systemctl set-default multi-user.target
+  when: disable_gui and default_target.stdout != 'multi-user.target'
+
+- name: Boot to graphical.target (GUI)
+  ansible.builtin.command: systemctl set-default graphical.target
+  when: not disable_gui and default_target.stdout != 'graphical.target'
+
+- name: Stop display manager
+  ansible.builtin.systemd:
+    name: gdm
+    state: stopped
+  when: disable_gui
+
 # Network
 - name: Ensure NetworkManager keeps connections up without a logged-in user
   ansible.builtin.copy:

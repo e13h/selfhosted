@@ -1,2 +1,5 @@
 codeberg_keys_url: "https://codeberg.org/e13h.keys"
 storage_path: "/data"
+
+# Boot headless (multi-user.target) and stop GDM. Set false to restore the GUI.
+disable_gui: true
